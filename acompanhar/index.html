@@ -21,13 +21,17 @@
   .botoes a { flex:1; min-width:140px; text-align:center; text-decoration:none; padding:12px; border-radius:999px; font-weight:700; }
   .b190 { background:var(--erro); color:#fff; }
   .bmapa { background:#efe1fb; color:var(--roxo); }
+  .eu { width:22px; height:22px; border-radius:50%; background:var(--roxo); border:3px solid #fff; box-shadow:0 0 0 0 rgba(123,44,191,.6); animation:pulso 1.8s infinite; }
+  .saida { width:14px; height:14px; border-radius:50%; background:#fff; border:3px solid var(--roxo); }
+  .leg { display:inline-block; width:22px; height:5px; border-radius:3px; background:var(--roxo); vertical-align:middle; margin-right:4px; }
+  @keyframes pulso { 0% { box-shadow:0 0 0 0 rgba(123,44,191,.55); } 70% { box-shadow:0 0 0 16px rgba(123,44,191,0); } 100% { box-shadow:0 0 0 0 rgba(123,44,191,0); } }
   .msg { padding:24px 16px; text-align:center; color:var(--sub); }
 </style>
 </head>
 <body>
 <header>
   <h1>ALERTA ALENTO — localização ao vivo</h1>
-  <p>Alguém que confia em você pediu ajuda. A posição atualiza sozinha.</p>
+  <p>Alguém que confia em você pediu ajuda. O mapa mostra o caminho feito e a posição atual, que atualiza sozinha.</p>
 </header>
 <div id="mapa"></div>
 <div class="info" id="info"><div class="msg">Carregando a localização…</div></div>
@@ -40,9 +44,12 @@ const mapa = L.map("mapa").setView([-8.0476, -34.877], 12);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19, attribution: "&copy; OpenStreetMap"
 }).addTo(mapa);
-let marcador = null, circulo = null, centralizado = false;
+let marcador = null, circulo = null, linha = null, inicio = null, centralizado = false;
+let atual = null, animacao = null, ultimaVez = null;
 const info = document.getElementById("info");
 const fmt = (d) => new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const ponto = L.divIcon({ className: "", html: '<div class="eu"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+const saida = L.divIcon({ className: "", html: '<div class="saida"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
 
 function botoes(lat, lng) {
   return `<div class="botoes">
@@ -51,45 +58,89 @@ function botoes(lat, lng) {
   </div>`;
 }
 
+async function rpc(nome) {
+  const r = await fetch(`${URL_SB}/rest/v1/rpc/${nome}`, {
+    method: "POST",
+    headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_token: token }),
+  });
+  if (!r.ok) return [];
+  const d = await r.json();
+  return Array.isArray(d) ? d : [];
+}
+
+// desliza o marcador até a nova posição (sensação de movimento contínuo)
+function moverSuave(destino) {
+  if (!atual) { atual = destino; marcador.setLatLng(destino); return; }
+  const de = atual, dur = 2500, t0 = performance.now();
+  cancelAnimationFrame(animacao);
+  const passo = (t) => {
+    const k = Math.min(1, (t - t0) / dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const p = [de[0] + (destino[0] - de[0]) * e, de[1] + (destino[1] - de[1]) * e];
+    marcador.setLatLng(p); circulo.setLatLng(p);
+    if (k < 1) animacao = requestAnimationFrame(passo); else atual = destino;
+  };
+  animacao = requestAnimationFrame(passo);
+}
+
+function tempoDesde() {
+  const el = document.getElementById("desde");
+  if (!el || !ultimaVez) return;
+  const s = Math.max(0, Math.round((Date.now() - ultimaVez) / 1000));
+  el.textContent = s < 60 ? `há ${s} s` : `há ${Math.floor(s / 60)} min`;
+}
+setInterval(tempoDesde, 1000);
+
 async function atualizar() {
   if (token.length < 20) {
     info.innerHTML = `<div class="msg">Link inválido.</div>`;
     return;
   }
   try {
-    const r = await fetch(`${URL_SB}/rest/v1/rpc/aovivo_ver`, {
-      method: "POST",
-      headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ p_token: token }),
-    });
-    const dados = await r.json();
-    const p = Array.isArray(dados) ? dados[0] : null;
+    const [vivo, pontos] = await Promise.all([rpc("aovivo_ver"), rpc("aovivo_pontos")]);
+    const p = vivo[0];
     if (!p) {
       info.innerHTML = `<div class="alerta">A localização ao vivo ainda não chegou ou o link expirou (30 minutos).</div>
         <div>Se a pessoa está em perigo, ligue 190.</div>${botoes(null)}`;
       return;
     }
     const pos = [p.lat, p.lng];
-    if (!marcador) {
-      marcador = L.marker(pos).addTo(mapa);
-      circulo = L.circle(pos, { radius: p.precisao_m || 30, color: "#7B2CBF" }).addTo(mapa);
-    } else {
-      marcador.setLatLng(pos);
-      circulo.setLatLng(pos).setRadius(p.precisao_m || 30);
+    const caminho = pontos.map((q) => [q.lat, q.lng]);
+    if (!caminho.length || caminho[caminho.length - 1][0] !== pos[0] || caminho[caminho.length - 1][1] !== pos[1]) caminho.push(pos);
+    if (!linha) {
+      linha = L.polyline(caminho, { color: "#7B2CBF", weight: 5, opacity: .85, lineJoin: "round" }).addTo(mapa);
+    } else linha.setLatLngs(caminho);
+    if (caminho.length > 1) {
+      if (!inicio) inicio = L.marker(caminho[0], { icon: saida, title: "Início do trajeto" }).addTo(mapa);
+      else inicio.setLatLng(caminho[0]);
     }
-    if (!centralizado) { mapa.setView(pos, 16); centralizado = true; }
+    if (!marcador) {
+      circulo = L.circle(pos, { radius: p.precisao_m || 30, color: "#7B2CBF", weight: 1, fillOpacity: .12 }).addTo(mapa);
+      marcador = L.marker(pos, { icon: ponto, zIndexOffset: 1000 }).addTo(mapa);
+    }
+    circulo.setRadius(p.precisao_m || 30);
+    moverSuave(pos);
+    if (!centralizado) {
+      if (caminho.length > 1) mapa.fitBounds(linha.getBounds(), { padding: [40, 40], maxZoom: 17 });
+      else mapa.setView(pos, 16);
+      centralizado = true;
+    }
+    ultimaVez = new Date(p.atualizado_em).getTime();
     const min = Math.max(0, Math.round((new Date(p.expira_em) - Date.now()) / 60000));
+    const desde = caminho.length > 1 && pontos[0] ? ` desde as <b>${fmt(pontos[0].em)}</b>` : "";
     info.innerHTML = `
-      <div>Última atualização: <b>${fmt(p.atualizado_em)}</b>${p.precisao_m ? ` · precisão de ~${Math.round(p.precisao_m)} m` : ""}</div>
+      <div>Última posição: <b>${fmt(p.atualizado_em)}</b> (<span id="desde"></span>)${p.precisao_m ? ` · precisão de ~${Math.round(p.precisao_m)} m` : ""}</div>
+      ${caminho.length > 1 ? `<div><span class="leg"></span> Caminho percorrido${desde}.</div>` : ""}
       <div>O acompanhamento termina em <b>${min} min</b>.</div>
       <div class="alerta">Se a pessoa está em perigo, ligue 190 e informe a localização.</div>
       ${botoes(p.lat, p.lng)}`;
+    tempoDesde();
   } catch (e) {
     info.innerHTML = `<div class="msg">Sem conexão. Tentando de novo…</div>${botoes(null)}`;
   }
 }
 atualizar();
-setInterval(atualizar, 20000);
+setInterval(atualizar, 15000);
 </script>
 </body>
 </html>
