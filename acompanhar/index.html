@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Alento — localização ao vivo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root { --roxo:#7B2CBF; --tx:#1d1b20; --sub:#49454f; --bg:#fff8f3; --erro:#b3261e; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--tx); }
+  header { padding:14px 16px; background:var(--roxo); color:#fff; }
+  header h1 { margin:0; font-size:18px; }
+  header p { margin:4px 0 0; font-size:14px; opacity:.9; }
+  #mapa { height:62vh; width:100%; }
+  .info { padding:14px 16px; display:grid; gap:8px; font-size:15px; }
+  .info b { color:var(--roxo); }
+  .alerta { background:#fde7e9; color:var(--erro); padding:12px 14px; border-radius:10px; font-weight:600; }
+  .botoes { display:flex; gap:10px; flex-wrap:wrap; }
+  .botoes a { flex:1; min-width:140px; text-align:center; text-decoration:none; padding:12px; border-radius:999px; font-weight:700; }
+  .b190 { background:var(--erro); color:#fff; }
+  .bmapa { background:#efe1fb; color:var(--roxo); }
+  .msg { padding:24px 16px; text-align:center; color:var(--sub); }
+</style>
+</head>
+<body>
+<header>
+  <h1>ALERTA ALENTO — localização ao vivo</h1>
+  <p>Alguém que confia em você pediu ajuda. A posição atualiza sozinha.</p>
+</header>
+<div id="mapa"></div>
+<div class="info" id="info"><div class="msg">Carregando a localização…</div></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const URL_SB = "https://mynkwvtoouaxevyxsqlq.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";
+const token = new URLSearchParams(location.search).get("t") || "";
+const mapa = L.map("mapa").setView([-8.0476, -34.877], 12);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19, attribution: "&copy; OpenStreetMap"
+}).addTo(mapa);
+let marcador = null, circulo = null, centralizado = false;
+const info = document.getElementById("info");
+const fmt = (d) => new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+function botoes(lat, lng) {
+  return `<div class="botoes">
+    <a class="b190" href="tel:190">Ligar 190</a>
+    ${lat != null ? `<a class="bmapa" href="https://maps.google.com/?q=${lat},${lng}" target="_blank" rel="noopener">Abrir no Google Maps</a>` : ""}
+  </div>`;
+}
+
+async function atualizar() {
+  if (token.length < 20) {
+    info.innerHTML = `<div class="msg">Link inválido.</div>`;
+    return;
+  }
+  try {
+    const r = await fetch(`${URL_SB}/rest/v1/rpc/aovivo_ver`, {
+      method: "POST",
+      headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_token: token }),
+    });
+    const dados = await r.json();
+    const p = Array.isArray(dados) ? dados[0] : null;
+    if (!p) {
+      info.innerHTML = `<div class="alerta">A localização ao vivo ainda não chegou ou o link expirou (30 minutos).</div>
+        <div>Se a pessoa está em perigo, ligue 190.</div>${botoes(null)}`;
+      return;
+    }
+    const pos = [p.lat, p.lng];
+    if (!marcador) {
+      marcador = L.marker(pos).addTo(mapa);
+      circulo = L.circle(pos, { radius: p.precisao_m || 30, color: "#7B2CBF" }).addTo(mapa);
+    } else {
+      marcador.setLatLng(pos);
+      circulo.setLatLng(pos).setRadius(p.precisao_m || 30);
+    }
+    if (!centralizado) { mapa.setView(pos, 16); centralizado = true; }
+    const min = Math.max(0, Math.round((new Date(p.expira_em) - Date.now()) / 60000));
+    info.innerHTML = `
+      <div>Última atualização: <b>${fmt(p.atualizado_em)}</b>${p.precisao_m ? ` · precisão de ~${Math.round(p.precisao_m)} m` : ""}</div>
+      <div>O acompanhamento termina em <b>${min} min</b>.</div>
+      <div class="alerta">Se a pessoa está em perigo, ligue 190 e informe a localização.</div>
+      ${botoes(p.lat, p.lng)}`;
+  } catch (e) {
+    info.innerHTML = `<div class="msg">Sem conexão. Tentando de novo…</div>${botoes(null)}`;
+  }
+}
+atualizar();
+setInterval(atualizar, 20000);
+</script>
+</body>
+</html>

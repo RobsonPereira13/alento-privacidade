@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alento — Painel de incidência (anônimo)</title>
+<style>
+  :root { --roxo:#7B2CBF; --roxo2:#5A189A; --tx:#1d1b20; --sub:#5f5a64; --bg:#fbf8fd; --card:#fff; --lil:#efe1fb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--tx); }
+  header { background:var(--roxo2); color:#fff; padding:20px 16px; }
+  header h1 { margin:0; font-size:22px; }
+  header p { margin:6px 0 0; opacity:.9; font-size:14px; }
+  main { max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px; }
+  .filtro { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  select { padding:10px 12px; border-radius:10px; border:1px solid #d6c8e4; font-size:15px; }
+  .grade { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+  .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+  .card h2 { margin:0 0 12px; font-size:16px; color:var(--roxo2); }
+  .linha { display:grid; grid-template-columns:150px 1fr 44px; gap:8px; align-items:center; margin:6px 0; font-size:14px; }
+  .trilho { background:#ece6f1; border-radius:999px; height:10px; overflow:hidden; }
+  .barra { background:var(--roxo); height:10px; border-radius:999px; }
+  .num { text-align:right; color:var(--sub); font-weight:700; }
+  .vazio { color:var(--sub); font-size:14px; }
+  .aviso { background:var(--lil); border-radius:12px; padding:12px 14px; font-size:13px; color:var(--roxo2); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Alento — Painel de incidência</h1>
+  <p>Dados anônimos e agrupados, relatados pelas usuárias do app em Pernambuco.</p>
+</header>
+<main>
+  <div class="filtro">
+    <label for="regiao"><b>Região</b> (raio de 20 km):</label>
+    <select id="regiao"></select>
+  </div>
+  <div class="aviso">Nenhuma usuária é identificada: só aparecem números quando há relatos suficientes na área
+    (mínimo de 3 a 5 relatos). Sem número suficiente, o gráfico fica vazio.</div>
+  <div class="grade" id="grade"></div>
+</main>
+<script>
+const URL_SB = "https://mynkwvtoouaxevyxsqlq.supabase.co", ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";
+const REGIOES = [
+  ["Recife", -8.0476, -34.8770], ["Jaboatão dos Guararapes", -8.1128, -35.0147],
+  ["Olinda", -8.0089, -34.8553], ["Paulista", -7.9408, -34.8728], ["Cabo de Santo Agostinho", -8.2836, -35.0353],
+  ["Caruaru", -8.2760, -35.9819], ["Garanhuns", -8.8903, -36.4928], ["Vitória de Santo Antão", -8.1181, -35.2914],
+  ["Petrolina", -9.3891, -40.5030], ["Serra Talhada", -7.9918, -38.2983], ["Arcoverde", -8.4189, -37.0539],
+];
+const ROT = {
+  psicologica:"Psicológica", patrimonial:"Patrimonial", fisica:"Física", sexual:"Sexual",
+  alto:"Risco alto", medio:"Risco médio", baixo:"Preventivo",
+  alcool:"Álcool", drogas:"Outras drogas", ciume:"Ciúme e controle", arma_fogo:"Arma de fogo",
+  ameaca_morte:"Ameaça de morte", violento_outros:"Violência contra outros", crise_financeira:"Crise financeira",
+  madrugada:"Noite/madrugada em casa", trajeto:"Trajeto trabalho/estudo", encontros:"Encontros", imprevisivel:"A qualquer hora",
+};
+const sel = document.getElementById("regiao");
+REGIOES.forEach(([n], i) => sel.add(new Option(n, i)));
+
+async function rpc(nome, lat, lng) {
+  try {
+    const r = await fetch(`${URL_SB}/rest/v1/rpc/${nome}`, {
+      method: "POST",
+      headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_lat: lat, p_lng: lng, p_raio_m: 20000 }),
+    });
+    const d = await r.json();
+    return Array.isArray(d) ? d : [];
+  } catch { return []; }
+}
+function card(titulo, itens) {
+  if (!itens.length) return `<div class="card"><h2>${titulo}</h2><div class="vazio">Ainda não há relatos suficientes nesta região.</div></div>`;
+  const max = Math.max(...itens.map((i) => i.total));
+  return `<div class="card"><h2>${titulo}</h2>${itens.map((i) => `
+    <div class="linha"><span>${ROT[i.chave] || i.chave}</span>
+      <div class="trilho"><div class="barra" style="width:${Math.max(6, i.total / max * 100)}%"></div></div>
+      <span class="num">${i.total}</span></div>`).join("")}</div>`;
+}
+const mapa = (lista, campo) => lista.map((r) => ({ chave: String(r[campo]), total: Number(r.total) }));
+
+async function carregar() {
+  const [, lat, lng] = REGIOES[sel.value];
+  const grade = document.getElementById("grade");
+  grade.innerHTML = `<div class="vazio">Carregando…</div>`;
+  const [tipos, nivel, mensal, fatores, horarios, areas] = await Promise.all([
+    rpc("incidencia_tipos", lat, lng), rpc("incidencia_nivel", lat, lng), rpc("incidencia_mensal", lat, lng),
+    rpc("ranking_fatores", lat, lng), rpc("ranking_horarios", lat, lng), rpc("mapa_incidencia", lat, lng),
+  ]);
+  grade.innerHTML = [
+    card("Tipos de violência", mapa(tipos, "tipo")),
+    card("Nível de risco", mapa(nivel, "nivel")),
+    card("Relatos por mês", mapa(mensal, "mes")),
+    card("Fatores de risco", mapa(fatores, "fator")),
+    card("Quando se sentem mais desprotegidas", mapa(horarios, "horario")),
+    card("Áreas com mais relatos", areas.map((a) => ({ chave: `${a.bairro}${a.cidade ? " · " + a.cidade : ""}`, total: Number(a.total) }))),
+  ].join("");
+}
+sel.addEventListener("change", carregar);
+carregar();
+</script>
+</body>
+</html>
