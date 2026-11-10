@@ -20,7 +20,7 @@
 <body>
 <main>
 <h1>Política de Privacidade do Alento</h1>
-<p class="data">Última atualização: 15 de outubro de 2026</p>
+<p class="data">Última atualização: 10 de novembro de 2026</p>
 
 <p>O Alento é um aplicativo de apoio e segurança para mulheres em situação de violência em Pernambuco. Esta política explica quais dados o app usa, por quê, por quanto tempo e como você pode apagá-los, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018).</p>
 
@@ -33,6 +33,10 @@
 <tr><td>Pergunta secreta e resposta</td><td>Recuperar o acesso se você esquecer o PIN. A resposta é guardada só como código cifrado (hash), nunca em texto.</td><td>Servidor, até você trocar ou excluir a conta.</td></tr>
 <tr><td>Contatos de confiança (nome e telefone)</td><td>Enviar o SMS de alerta quando você aciona o SOS.</td><td>Aparelho e servidor, até você removê-los ou excluir a conta.</td></tr>
 <tr><td>Localização</td><td>Enviar onde você está no SMS de alerta e mostrar a rede de apoio perto de você.</td><td>Enviada no alerta. No servidor fica junto do alerta e da gravação, até você excluir a conta.</td></tr>
+<tr><td>Localização ao vivo durante o SOS</td><td>Depois de acionar o SOS, sua posição é enviada a cada 15 segundos, por até 30 minutos, para que seus contatos acompanhem o caminho num mapa, por um link privado com código aleatório enviado no SMS.</td><td>Servidor. O link para de funcionar em 30 minutos, e as posições são apagadas em até 1 dia.</td></tr>
+<tr><td>Trajeto do "Estou a caminho"</td><td>Enquanto o prazo corre, o app registra o caminho que você faz. <strong>Se você confirmar que chegou bem, o trajeto é apagado sem ser enviado a ninguém.</strong> Só se você não confirmar a tempo, o alerta é disparado e o trajeto vai junto com a localização ao vivo.</td><td>Só no aparelho durante o trajeto. Enviado ao servidor apenas se o alerta disparar, e aí segue a regra da localização ao vivo (apagado em até 1 dia).</td></tr>
+<tr><td>Diário de ocorrências e fotos anexadas</td><td>Organizar os episódios de violência e gerar um PDF para levar à delegacia, à Defensoria ou à advogada.</td><td><strong>Só no aparelho</strong>, numa área privada do app (as fotos não aparecem na galeria). Nunca enviado ao servidor. O PDF só sai do celular quando você mesma compartilha. Apagado ao sair da conta.</td></tr>
+<tr><td>Registros de falha do app</td><td>Descobrir e corrigir telas que travam. Contém só a mensagem técnica do erro, o nome da tela e a versão do app. Números de telefone e e-mails que apareçam no erro são mascarados antes de sair do celular.</td><td>Servidor, sem ligação com a sua conta. Apagado após 90 dias.</td></tr>
 <tr><td>Gravações de áudio e vídeo</td><td>Registrar prova quando você aciona o SOS e permitir que seus contatos ouçam ou vejam por um link.</td><td><strong>Servidor: 24 horas</strong>, depois são apagadas automaticamente. No aparelho: até você excluir.</td></tr>
 <tr><td>Respostas da triagem (questionário)</td><td>Indicar seu nível de risco e gerar estatísticas <strong>anônimas e agrupadas</strong> por região (por exemplo, tipos de violência mais relatados). Nenhum gráfico mostra dados de uma pessoa: só aparecem números quando há relatos suficientes na área.</td><td>Servidor, até você excluir a conta.</td></tr>
 <tr><td>Mensagens nas salas de conversa</td><td>Troca de experiências entre usuárias, com pseudônimo.</td><td>Servidor, até você excluir a conta.</td></tr>
@@ -42,8 +46,9 @@
 <h2>2. Permissões do celular</h2>
 <ul>
 <li><strong>SMS:</strong> enviar automaticamente o alerta com sua localização e o link da gravação aos seus contatos de confiança. O app não lê suas mensagens.</li>
-<li><strong>Microfone e câmera:</strong> gravar áudio e/ou vídeo somente quando você aciona o SOS ou a bolinha flutuante.</li>
-<li><strong>Localização:</strong> incluir onde você está no alerta e mostrar serviços próximos.</li>
+<li><strong>Microfone e câmera:</strong> gravar áudio e/ou vídeo somente quando você aciona o SOS, a bolinha, o widget ou o atalho do ícone. A câmera também é usada quando você escolhe tirar uma foto para o diário.</li>
+<li><strong>Fotos:</strong> anexar imagens ao diário pelo seletor de fotos do Android. O app só recebe as imagens que você escolher; não tem acesso à sua galeria.</li>
+<li><strong>Localização:</strong> incluir onde você está no alerta, acompanhar o caminho durante o SOS e durante o "Estou a caminho" (com uma notificação visível enquanto isso acontece) e mostrar serviços próximos. O app não acessa a localização em segundo plano fora dessas situações.</li>
 <li><strong>Exibir sobre outros apps:</strong> manter a bolinha flutuante de acesso rápido ao SOS.</li>
 <li><strong>Notificações e execução em segundo plano:</strong> manter a gravação funcionando com o app fechado, como exige o Android.</li>
 </ul>
@@ -53,18 +58,21 @@
 <li><strong>Seus contatos de confiança</strong>, que recebem o SMS com sua localização e o link da gravação quando você aciona o SOS.</li>
 <li><strong>Supabase</strong>, empresa que hospeda o servidor e o banco de dados do app.</li>
 <li><strong>Sua operadora de telefonia</strong>, que transmite o SMS.</li>
+<li><strong>Serviço de envio de SMS pela internet</strong> (textbee ou Twilio), usado <strong>só como reserva</strong> quando a operadora recusa o SMS do seu celular (por exemplo, sem crédito). Ele recebe apenas o texto do alerta e o telefone dos seus contatos de confiança.</li>
 <li><strong>OpenStreetMap (Nominatim)</strong>, que recebe sua localização aproximada para informar o bairro e a cidade, sem nenhum dado de identificação.</li>
+<li><strong>Quem recebe o link de acompanhamento</strong>, que vê só a posição e o caminho no mapa, sem nome, telefone ou dados da conta.</li>
 </ul>
 <p>Os serviços oficiais mostrados no app (197 Mulher, Delegacia Virtual, Protege Mulher e outros) são abertos nos sites deles. O Alento não envia seus dados a eles.</p>
 
 <h2>4. Segurança</h2>
-<p>A comunicação com o servidor é criptografada (HTTPS). Cada conta só acessa os próprios dados. Os links das gravações são privados e expiram em 24 horas. Tentativas repetidas de PIN ou de resposta secreta erradas bloqueiam o acesso temporariamente.</p>
+<p>A comunicação com o servidor é criptografada (HTTPS). Cada conta só acessa os próprios dados. Os links das gravações são privados e expiram em 24 horas; os de localização ao vivo, em 30 minutos. Tentativas repetidas de PIN ou de resposta secreta erradas bloqueiam o acesso temporariamente.</p>
 
 <h2>5. Seus direitos e como excluir seus dados</h2>
 <p>Você pode, a qualquer momento:</p>
 <ul>
 <li><strong>Excluir sua conta pelo app:</strong> Perfil → <em>Excluir minha conta</em>. Isso apaga do servidor seu cadastro, contatos, alertas, triagem, mensagens e gravações.</li>
 <li><strong>Apagar gravações:</strong> Perfil → Gravações de emergência → botão de lixeira.</li>
+<li><strong>Apagar registros do diário e fotos:</strong> no próprio Diário de ocorrências, botão de lixeira em cada registro. Tudo é apagado também ao sair da conta.</li>
 <li>Pedir acesso, correção ou exclusão dos seus dados pelo e-mail <a href="mailto:robsonpereirape@gmail.com">robsonpereirape@gmail.com</a>. Respondemos em até 15 dias.</li>
 </ul>
 <p>Gravações salvas no seu aparelho só são apagadas por você, ou se você desinstalar o app ou limpar os dados dele nas configurações do celular.</p>
