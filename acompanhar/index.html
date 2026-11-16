@@ -4,8 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<!-- segurança: só carrega o que a página precisa (Leaflet, mapas OSM, Supabase) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://unpkg.com 'sha256-xT+4Lli36OM3QVR7czDuCnzIq5hHI9Tlk0SyB2wtqbA='; style-src 'unsafe-inline' https://unpkg.com; img-src https://*.tile.openstreetmap.org https://unpkg.com data:; connect-src https://mynkwvtoouaxevyxsqlq.supabase.co; base-uri 'none'; form-action 'none'">
+<!-- o código do link está no endereço: não mandar para o servidor de mapas -->
+<meta name="referrer" content="no-referrer">
 <title>Alento — localização ao vivo</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
   :root { --roxo:#7B2CBF; --tx:#1d1b20; --sub:#49454f; --bg:#fff8f3; --erro:#b3261e; }
   * { box-sizing:border-box; }
@@ -35,7 +39,7 @@
 </header>
 <div id="mapa"></div>
 <div class="info" id="info"><div class="msg">Carregando a localização…</div></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 const URL_SB = "https://mynkwvtoouaxevyxsqlq.supabase.co";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";
