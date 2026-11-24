@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <!-- segurança: só carrega o que a página precisa (Leaflet, mapas OSM, Supabase) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://unpkg.com 'sha256-xT+4Lli36OM3QVR7czDuCnzIq5hHI9Tlk0SyB2wtqbA='; style-src 'unsafe-inline' https://unpkg.com; img-src https://*.tile.openstreetmap.org https://unpkg.com data:; connect-src https://mynkwvtoouaxevyxsqlq.supabase.co; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://unpkg.com 'sha256-FbVa5GQoCarBUX84UQo5+wE2KGf4rM8UD7Gc8PMSPEs='; style-src 'unsafe-inline' https://unpkg.com; img-src https://*.tile.openstreetmap.org https://unpkg.com data:; connect-src https://mynkwvtoouaxevyxsqlq.supabase.co; base-uri 'none'; form-action 'none'">
 <!-- o código do link está no endereço: não mandar para o servidor de mapas -->
 <meta name="referrer" content="no-referrer">
 <title>Alento — localização ao vivo</title>
@@ -42,7 +42,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 const URL_SB = "https://mynkwvtoouaxevyxsqlq.supabase.co";
-const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";  // nosemgrep mobsf-ignore: js_hardcoded_secret -- chave PÚBLICA (anon) do Supabase, protegida por RLS
 const token = new URLSearchParams(location.search).get("t") || "";
 const mapa = L.map("mapa").setView([-8.0476, -34.877], 12);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -65,7 +65,7 @@ function botoes(lat, lng) {
 async function rpc(nome) {
   const r = await fetch(`${URL_SB}/rest/v1/rpc/${nome}`, {
     method: "POST",
-    headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
+    headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },  // nosemgrep mobsf-ignore: js_hardcoded_secret -- chave PÚBLICA (anon) do Supabase, protegida por RLS
     body: JSON.stringify({ p_token: token }),
   });
   if (!r.ok) return [];

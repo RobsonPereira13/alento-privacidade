@@ -40,7 +40,7 @@
   <div class="grade" id="grade"></div>
 </main>
 <script>
-const URL_SB = "https://mynkwvtoouaxevyxsqlq.supabase.co", ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";
+const URL_SB = "https://mynkwvtoouaxevyxsqlq.supabase.co", ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15bmt3dnRvb3VheGV2eXhzcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzU4NDUsImV4cCI6MjEwNDU1MTg0NX0.-h52cFMVzs1cEGKavqsXkjNWa_9YdXj4hk9AyvFb9iA";  // nosemgrep mobsf-ignore: js_hardcoded_secret -- chave PÚBLICA (anon) do Supabase, protegida por RLS
 const REGIOES = [
   ["Recife", -8.0476, -34.8770], ["Jaboatão dos Guararapes", -8.1128, -35.0147],
   ["Olinda", -8.0089, -34.8553], ["Paulista", -7.9408, -34.8728], ["Cabo de Santo Agostinho", -8.2836, -35.0353],
@@ -61,7 +61,7 @@ async function rpc(nome, lat, lng) {
   try {
     const r = await fetch(`${URL_SB}/rest/v1/rpc/${nome}`, {
       method: "POST",
-      headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
+      headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },  // nosemgrep mobsf-ignore: js_hardcoded_secret -- chave PÚBLICA (anon) do Supabase, protegida por RLS
       body: JSON.stringify({ p_lat: lat, p_lng: lng, p_raio_m: 20000 }),
     });
     const d = await r.json();
